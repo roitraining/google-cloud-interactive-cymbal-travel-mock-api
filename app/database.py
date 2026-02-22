@@ -335,7 +335,18 @@ def add_to_cart(cart_add_request):
         "total_price": new_total
     })
     return True
+
+def remove_from_cart(cart_remove_request):
+    if not db:
+        return False
         
+    user_id = cart_remove_request.user_id
+    cart_ref = db.collection(COL_CARTS).document(user_id)
+    doc = cart_ref.get()
+    
+    if not doc.exists:
+        return False
+
     current_data = doc.to_dict()
     items = current_data.get("items", [])
     
