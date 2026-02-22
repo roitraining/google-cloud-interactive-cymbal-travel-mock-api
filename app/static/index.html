@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cymbal Travel</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue.js 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        [v-cloak] { display: none; }
+        .hero-pattern {
+            background-color: #f0f9ff;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23bae6fd' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.3s ease;
+        }
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        travel: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+    <div id="app" v-cloak class="min-h-screen flex flex-col">
+        
+        <!-- Navigation -->
+        <nav class="bg-white shadow-sm sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <i class="ph ph-airplane-tilt text-3xl text-travel-600 mr-2"></i>
+                        <span class="text-2xl font-bold text-gray-900 tracking-tight">Cymbal<span class="text-travel-600">Travel</span></span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button @click="toggleCart" class="relative p-2 text-gray-600 hover:text-travel-600 transition-colors">
+                            <i class="ph ph-suitcase text-2xl"></i>
+                            <span v-if="cartCount > 0" class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-travel-600 rounded-full">
+                                {{ cartCount }}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-grow">
+            <!-- Hero / Search Section -->
+            <div class="hero-pattern py-12 border-b border-gray-200">
+                <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-8">
+                        <h1 class="text-4xl font-extrabold text-gray-900 mb-2">
+                            Where to next?
+                        </h1>
+                        <p class="text-lg text-gray-600">Discover resorts, flights, and cars for your next adventure.</p>
+                    </div>
+
+                    <!-- Search Tabs -->
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                        <div class="flex border-b border-gray-100">
+                            <button 
+                                v-for="tab in tabs" 
+                                :key="tab.id"
+                                @click="switchTab(tab.id)"
+                                :class="[
+                                    'flex-1 py-4 px-6 text-center text-sm font-medium transition-colors focus:outline-none flex items-center justify-center gap-2',
+                                    currentTab === tab.id 
+                                        ? 'text-travel-600 border-b-2 border-travel-600 bg-travel-50' 
+                                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                ]"
+                            >
+                                <i :class="['ph text-lg', tab.icon]"></i>
+                                {{ tab.name }}
+                            </button>
+                        </div>
+
+                        <!-- Search Forms -->
+                        <div class="p-6">
+                            <!-- FLIGHTS Search -->
+                            <div v-if="currentTab === 'flights'" class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="relative">
+                                        <i class="ph ph-airplane-takeoff absolute left-3 top-3 text-gray-400 text-xl"></i>
+                                        <input v-model="flightSearch.origin" type="text" placeholder="From (e.g., SFO)" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-travel-500 focus:border-travel-500 outline-none">
+                                    </div>
+                                    <div class="relative">
+                                        <i class="ph ph-airplane-landing absolute left-3 top-3 text-gray-400 text-xl"></i>
+                                        <select v-model="flightSearch.destination" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-travel-500 focus:border-travel-500 outline-none bg-white appearance-none">
+                                            <option value="" disabled selected>Select Destination Resort</option>
+                                            <option v-for="resort in allResorts" :key="resort.id" :value="resort.location">
+                                                {{ resort.property_name }} ({{ resort.location }})
+                                            </option>
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                        </div>
+                                    </div>
+                                    <div class="relative">
+                                        <label class="block text-xs text-gray-500 mb-1 ml-1">Departure</label>
+                                        <input v-model="flightSearch.date" type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-travel-500 focus:border-travel-500 outline-none">
+                                    </div>
+                                    <div class="relative">
+                                        <label class="block text-xs text-gray-500 mb-1 ml-1">Return</label>
+                                        <input v-model="flightSearch.returnDate" type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-travel-500 focus:border-travel-500 outline-none">
+                                    </div>
+                                </div>
+                                <button @click="searchFlights" :disabled="loading" class="w-full md:w-auto px-8 py-2 bg-travel-600 text-white font-semibold rounded-lg hover:bg-travel-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                                    <i v-if="loading" class="ph ph-spinner animate-spin"></i>
+                                    Search Flights
+                                </button>
+                            </div>
+
+                            <!-- HOTELS Search -->
+                            <div v-if="currentTab === 'hotels'" class="space-y-4">
+                                <div class="relative">
+                                    <i class="ph ph-map-pin absolute left-3 top-3 text-gray-400 text-xl"></i>
+                                    <select v-model="hotelSearch.query" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-travel-500 focus:border-travel-500 outline-none bg-white appearance-none">
+                                        <option value="" disabled selected>Select Resort</option>
+                                        <option v-for="resort in allResorts" :key="resort.id" :value="resort.location">
+                                            {{ resort.property_name }} ({{ resort.location }})
+                                        </option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                    </div>
+                                </div>
+                                <div class="flex gap-4">
+                                    <button @click="searchHotels" :disabled="loading" class="flex-1 px-8 py-2 bg-travel-600 text-white font-semibold rounded-lg hover:bg-travel-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                                        <i v-if="loading" class="ph ph-spinner animate-spin"></i>
+                                        Search Resorts
+                                    </button>
+                                     <button @click="searchHotelsAll" :disabled="loading" class="px-8 py-2 bg-white border border-travel-600 text-travel-600 font-semibold rounded-lg hover:bg-travel-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                                        Browse All Resorts
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- CARS Search -->
+                            <div v-if="currentTab === 'cars'" class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="relative md:col-span-2">
+                                        <i class="ph ph-map-pin absolute left-3 top-3 text-gray-400 text-xl"></i>
+                                        <select v-model="carSearch.location" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-travel-500 focus:border-travel-500 outline-none bg-white appearance-none">
+                                            <option value="" disabled selected>Select Pick-up Resort</option>
+                                             <option v-for="resort in allResorts" :key="resort.id" :value="resort.location">
+                                                {{ resort.property_name }} ({{ resort.location }})
+                                            </option>
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                        </div>
+                                    </div>
+                                    <div class="relative">
+                                        <label class="block text-xs text-gray-500 mb-1 ml-1">Pick-up Date</label>
+                                        <input v-model="carSearch.date" type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-travel-500 focus:border-travel-500 outline-none">
+                                    </div>
+                                    <div class="relative">
+                                        <label class="block text-xs text-gray-500 mb-1 ml-1">Drop-off Date</label>
+                                        <input v-model="carSearch.returnDate" type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-travel-500 focus:border-travel-500 outline-none">
+                                    </div>
+                                </div>
+                                <button @click="searchCars" :disabled="loading" class="w-full md:w-auto px-8 py-2 bg-travel-600 text-white font-semibold rounded-lg hover:bg-travel-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                                    <i v-if="loading" class="ph ph-spinner animate-spin"></i>
+                                    Search Cars
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <!-- TOP RESORTS Section (When no search active) -->
+            <div v-if="!hasSearched && currentTab === 'hotels'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Featured Resorts</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                     <div v-for="resort in topResorts" :key="resort.id" class="group bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer transform hover:-translate-y-1 transition-all duration-300" @click="openResortModal(resort)">
+                        <div class="relative h-64 overflow-hidden">
+                            <img :src="resort.image_url" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Resort">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                            <div class="absolute bottom-4 left-4 text-white">
+                                <h3 class="text-xl font-bold">{{ resort.property_name }}</h3>
+                                <p class="text-sm opacity-90"><i class="ph ph-map-pin"></i> {{ resort.location }}</p>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <p class="text-gray-600 line-clamp-2 text-sm">{{ resort.description }}</p>
+                            <div class="mt-4 flex items-center justify-between">
+                                <div class="flex items-center text-yellow-400 text-sm">
+                                    <i class="ph-fill ph-star"></i>
+                                    <span class="text-gray-700 ml-1 font-semibold">{{ resort.rating }}</span>
+                                </div>
+                                <span class="text-travel-600 font-semibold text-sm">View Rooms &rarr;</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" v-if="hasSearched">
+                
+                <div v-if="error" class="mb-6 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 flex items-center gap-2">
+                    <i class="ph ph-warning-circle text-xl"></i>
+                    {{ error }}
+                </div>
+
+                <div v-if="loading" class="text-center py-12">
+                    <i class="ph ph-spinner text-4xl text-travel-600 animate-spin"></i>
+                    <p class="mt-2 text-gray-500">Searching inventory...</p>
+                </div>
+
+                <div v-else-if="!results.length" class="text-center py-12 bg-white rounded-lg border border-gray-200 border-dashed">
+                    <i class="ph ph-magnifying-glass text-4xl text-gray-300"></i>
+                    <p class="mt-2 text-gray-500">No results found. Try adjusting your search.</p>
+                </div>
+
+                <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Flight Card -->
+                    <div v-if="currentTab === 'flights'" v-for="flight in results" :key="flight.id" class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow flex flex-col">
+                        <div class="p-5 flex-grow">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <div class="text-lg font-bold text-gray-900">{{ flight.airline }}</div>
+                                    <div class="text-sm text-gray-500">Flight {{ flight.flight_number }}</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xl font-bold text-travel-600">${{ flight.price }}</div>
+                                    <div class="text-xs text-gray-500">{{ flight.seat_class }}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg mb-4">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-gray-900">{{ formatTime(flight.departure_time) }}</div>
+                                    <div class="text-xs text-gray-500 uppercase font-bold text-center w-full truncate px-1" :title="flight.departure_city">{{ flight.departure_city }}</div>
+                                </div>
+                                <div class="flex-1 px-4 flex flex-col items-center">
+                                    <div class="text-xs text-travel-600 mb-1 font-semibold">
+                                        {{ getDuration(flight.departure_time, flight.arrival_time) }}
+                                    </div>
+                                    <div class="w-full border-t border-gray-300 relative flex justify-center">
+                                        <i class="ph ph-airplane text-travel-600 absolute top-1/2 transform -translate-y-1/2 bg-gray-50 px-1 rotate-90 text-lg"></i>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        {{ flight.connections === 0 ? 'Non-stop' : `${flight.connections} stop${flight.connections > 1 ? 's' : ''}` }}
+                                    </div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-gray-900">{{ formatTime(flight.arrival_time) }}</div>
+                                    <div class="text-xs text-gray-500 uppercase font-bold text-center w-full truncate px-1" :title="flight.arrival_city">{{ flight.arrival_city }}</div>
+                                </div>
+                            </div>
+                             <div class="mt-4">
+                                 <button @click="addToCart('flight', flight)" class="w-full py-2 bg-white border border-travel-600 text-travel-600 font-semibold rounded-lg hover:bg-travel-50 transition-colors flex items-center justify-center gap-2">
+                                    <i class="ph ph-plus"></i> Add to Suitcase
+                                </button>
+                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Hotel Card (Search Result) -->
+                    <div v-if="currentTab === 'hotels'" v-for="hotel in results" :key="hotel.id" class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden flex flex-col" @click="openResortModal(hotel)">
+                        <img :src="hotel.image_url || 'https://via.placeholder.com/400x200?text=Hotel+Image'" class="w-full h-48 object-cover cursor-pointer" alt="Hotel">
+                        <div class="p-5 flex-grow cursor-pointer">
+                            <div class="mb-2">
+                                <h3 class="text-lg font-bold text-gray-900 leading-tight">{{ hotel.property_name }}</h3>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-500 mb-4">
+                                <i class="ph ph-map-pin mr-1"></i> {{ hotel.location }}
+                            </div>
+                            <p class="text-sm text-gray-600 line-clamp-3">{{ hotel.description }}</p>
+                        </div>
+                         <div class="p-4 border-t border-gray-100">
+                             <button @click.stop="openResortModal(hotel)" class="w-full py-2 bg-travel-600 text-white font-semibold rounded-lg hover:bg-travel-700 transition-colors flex items-center justify-center gap-2">
+                                View Rooms
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Car Card -->
+                    <div v-if="currentTab === 'cars'" v-for="car in results" :key="car.id" class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden flex flex-col">
+                         <img :src="car.image_url || 'https://via.placeholder.com/400x200?text=Car+Image'" class="w-full h-48 object-cover" alt="Car">
+                         <div class="p-5 flex-grow">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-bold text-gray-900">{{ car.brand }} {{ car.model }}</h3>
+                                <div class="text-xl font-bold text-travel-600 whitespace-nowrap">${{ car.price_per_day }}<span class="text-sm font-normal text-gray-500">/day</span></div>
+                            </div>
+                             <div class="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                                <div class="flex items-center"><i class="ph ph-users mr-1"></i> {{ car.year }}</div>
+                                <div class="flex items-center"><i class="ph ph-gear mr-1"></i> Auto</div>
+                            </div>
+                         </div>
+                         <div class="p-4 border-t border-gray-100">
+                             <button @click="addToCart('car', car)" class="w-full py-2 bg-white border border-travel-600 text-travel-600 font-semibold rounded-lg hover:bg-travel-50 transition-colors flex items-center justify-center gap-2">
+                                <i class="ph ph-plus"></i> Add to Suitcase
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Resort Detail Modal -->
+        <div v-if="selectedResort" class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeResortModal"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                    <div class="relative">
+                        <img :src="selectedResort.image_url" class="w-full h-64 object-cover" alt="Resort Header">
+                        <button @click="closeResortModal" class="absolute top-4 right-4 bg-white/80 hover:bg-white rounded-full p-2 text-gray-800 transition-colors">
+                            <i class="ph ph-x text-xl"></i>
+                        </button>
+                        <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent text-white">
+                            <h2 class="text-3xl font-bold">{{ selectedResort.property_name }}</h2>
+                            <p class="text-lg opacity-90"><i class="ph ph-map-pin mr-1"></i> {{ selectedResort.location }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6">
+                        <p class="text-gray-600 mb-8 text-lg">{{ selectedResort.description }}</p>
+                        
+                        <div class="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                            <h3 class="font-semibold text-gray-900 mb-4">1. Select Travel Dates</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
+                                    <input type="date" v-model="bookingDates.start" class="w-full border border-gray-300 rounded-md p-2">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Check-out</label>
+                                    <input type="date" v-model="bookingDates.end" class="w-full border border-gray-300 rounded-md p-2">
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 class="font-semibold text-gray-900 mb-4 text-xl">2. Choose Your Room</h3>
+                        <div class="space-y-6">
+                            <div v-for="room in selectedResort.rooms" :key="room.id" class="flex flex-col md:flex-row border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                                <div class="md:w-1/3 h-48 md:h-auto">
+                                    <img :src="room.image_url" class="w-full h-full object-cover" alt="Room">
+                                </div>
+                                <div class="flex-1 p-6 flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex justify-between items-start">
+                                            <h4 class="text-xl font-bold text-gray-900">{{ room.room_type }}</h4>
+                                            <span class="text-xl font-bold text-travel-600">${{ room.price_per_night }}<span class="text-xs text-gray-500 font-normal">/night</span></span>
+                                        </div>
+                                        <p class="text-gray-600 mt-2">{{ room.description }}</p>
+                                    </div>
+                                    <div class="mt-4 flex justify-end">
+                                        <button @click="bookRoom(room)" :disabled="!bookingDates.start || !bookingDates.end" class="px-6 py-2 bg-travel-600 text-white font-semibold rounded-lg hover:bg-travel-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                            {{ (!bookingDates.start || !bookingDates.end) ? 'Select Dates First' : 'Book This Room' }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Sidebar (Slide-over) -->
+        <div v-if="isCartOpen" class="fixed inset-0 overflow-hidden z-[60]" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+            <div class="absolute inset-0 overflow-hidden">
+                <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="toggleCart"></div>
+                <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+                    <div class="pointer-events-auto w-screen max-w-md">
+                        <div class="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
+                            <div class="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+                                <div class="flex items-start justify-between">
+                                    <h2 class="text-lg font-medium text-gray-900" id="slide-over-title">Your Trip Suitcase</h2>
+                                    <div class="ml-3 flex h-7 items-center">
+                                        <button @click="toggleCart" type="button" class="-m-2 p-2 text-gray-400 hover:text-gray-500">
+                                            <span class="sr-only">Close panel</span>
+                                            <i class="ph ph-x text-2xl"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mt-8">
+                                    <div class="flow-root">
+                                        <ul v-if="cartItems.length > 0" role="list" class="-my-6 divide-y divide-gray-200">
+                                            <li v-for="item in cartItems" :key="item.id" class="flex py-6">
+                                                <div class="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 flex items-center justify-center bg-gray-50 text-2xl text-travel-600">
+                                                    <i v-if="item.inventory_type === 'flight'" class="ph ph-airplane-tilt"></i>
+                                                    <i v-else-if="item.inventory_type === 'hotel'" class="ph ph-buildings"></i>
+                                                    <i v-else class="ph ph-car"></i>
+                                                </div>
+
+                                                <div class="ml-4 flex flex-1 flex-col">
+                                                    <div>
+                                                        <div class="flex justify-between text-base font-medium text-gray-900">
+                                                            <h3 class="line-clamp-1">{{ getItemTitle(item) }}</h3>
+                                                            <p class="ml-4">${{ getItemPrice(item) }}</p>
+                                                        </div>
+                                                        <p class="mt-1 text-sm text-gray-500 capitalize">{{ item.inventory_type }}</p>
+                                                    </div>
+                                                    <div class="flex flex-1 items-end justify-between text-sm">
+                                                        <p class="text-gray-500">Qty 1</p>
+                                                        <div class="flex">
+                                                            <button type="button" class="font-medium text-red-600 hover:text-red-500" disabled>Remove (Coming Soon)</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                        <div v-else class="text-center py-12">
+                                            <i class="ph ph-suitcase text-4xl text-gray-300 mb-3"></i>
+                                            <p class="text-gray-500">Your suitcase is empty.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="cartItems.length > 0" class="border-t border-gray-200 px-4 py-6 sm:px-6">
+                                <div class="flex justify-between text-base font-medium text-gray-900">
+                                    <p>Subtotal</p>
+                                    <p>${{ cartTotal }}</p>
+                                </div>
+                                <p class="mt-0.5 text-sm text-gray-500">Taxes and fees calculated at checkout.</p>
+                                <div class="mt-6">
+                                    <button @click="checkout" class="w-full flex items-center justify-center rounded-md border border-transparent bg-travel-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-travel-700">Checkout</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const currentTab = ref('hotels'); // Default to hotels
+                const tabs = [
+                    { id: 'hotels', name: 'Resorts', icon: 'ph-buildings' },
+                    { id: 'flights', name: 'Flights', icon: 'ph-airplane-tilt' },
+                    { id: 'cars', name: 'Cars', icon: 'ph-car' }
+                ];
+                
+                const results = ref([]);
+                const topResorts = ref([]);
+                const loading = ref(false);
+                const error = ref(null);
+                const hasSearched = ref(false);
+                
+                const getDefaultDates = () => {
+                    const start = new Date();
+                    start.setDate(start.getDate() + 7); // 1 week from now
+                    const end = new Date(start);
+                    end.setDate(end.getDate() + 5); // 5 days after start
+                    
+                    return {
+                        start: start.toISOString().split('T')[0],
+                        end: end.toISOString().split('T')[0]
+                    };
+                };
+
+                const defaults = getDefaultDates();
+
+                const flightSearch = ref({ origin: '', destination: '', date: defaults.start, returnDate: defaults.end });
+                const hotelSearch = ref({ query: '' });
+                const carSearch = ref({ location: '', date: defaults.start, returnDate: defaults.end });
+
+                const isCartOpen = ref(false);
+                const cartItems = ref([]);
+                
+                // Resort Modal State
+                const selectedResort = ref(null);
+                const bookingDates = ref({ start: '', end: '' });
+                const allResorts = ref([]);
+
+                const toggleCart = () => isCartOpen.value = !isCartOpen.value;
+
+                const switchTab = (tabId) => {
+                    currentTab.value = tabId;
+                    // Reset UI state
+                    hasSearched.value = false;
+                    results.value = [];
+                    error.value = null;
+                    loading.value = false; 
+                };
+
+                const fetchTopResorts = async () => {
+                    try {
+                        const res = await fetch('/api/hotels/top');
+                        if (res.ok) {
+                            topResorts.value = await res.json();
+                        }
+                    } catch (e) {
+                        console.error("Failed to fetch top resorts", e);
+                    }
+                };
+
+                const fetchAllResorts = async () => {
+                    try {
+                         // Empty query gets all
+                        const res = await fetch('/api/hotels/search');
+                        if (res.ok) {
+                            allResorts.value = await res.json();
+                        }
+                    } catch (e) {
+                        console.error("Failed to fetch all resorts", e);
+                    }
+                };
+
+                const openResortModal = (resort) => {
+                    selectedResort.value = resort;
+                    
+                    const defaults = getDefaultDates();
+                    bookingDates.value.start = defaults.start;
+                    bookingDates.value.end = defaults.end;
+                };
+                
+                const closeResortModal = () => {
+                    selectedResort.value = null;
+                };
+
+                const searchFlights = async () => {
+                    loading.value = true;
+                    error.value = null;
+                    results.value = [];
+                    hasSearched.value = true;
+                    try {
+                        const params = new URLSearchParams(flightSearch.value);
+                        const res = await fetch(`/api/flights/search?${params}`);
+                        if (!res.ok) throw new Error('Failed to fetch flights');
+                        results.value = await res.json();
+                    } catch (e) {
+                        error.value = e.message;
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const searchHotels = async () => {
+                    loading.value = true;
+                    error.value = null;
+                    results.value = [];
+                    hasSearched.value = true;
+                    try {
+                        const res = await fetch(`/api/hotels/search?location=${hotelSearch.value.query}`);
+                        if (!res.ok) throw new Error('Failed to fetch hotels');
+                        results.value = await res.json();
+                    } catch (e) {
+                        error.value = e.message;
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+                
+                const searchHotelsAll = () => {
+                    hotelSearch.value.query = '';
+                    searchHotels();
+                };
+
+                const searchCars = async () => {
+                   loading.value = true;
+                    error.value = null;
+                    results.value = [];
+                    hasSearched.value = true;
+                    try {
+                        const params = new URLSearchParams(carSearch.value);
+                        const res = await fetch(`/api/cars/search?${params}`);
+                        if (!res.ok) throw new Error('Failed to fetch cars');
+                        results.value = await res.json();
+                    } catch (e) {
+                        error.value = e.message;
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+                
+                const fetchCart = async () => {
+                    try {
+                         const res = await fetch('/api/cart/default_user');
+                         if (res.ok) {
+                             const data = await res.json();
+                             cartItems.value = data.items.map(item => ({
+                                 ...item,
+                                 ...item.item_details, // Spread details
+                                 inventory_type: item.type // Ensure inventory_type is set correctly from CartItemDetail
+                             }));
+                         }
+                    } catch (e) {
+                        console.error('Error fetching cart:', e);
+                    }
+                };
+
+                const addToCart = async (type, item) => {
+                    // Wrapper for simple add (flights/cars/search results where no dates picked yet)
+                    // For resorts, we use bookRoom which has dates
+                    
+                    try {
+                        const payload = {
+                            user_id: 'default_user',
+                            item_id: item.id.toString(),
+                            type: type,
+                            quantity: 1
+                        };
+
+                        if (type === 'flight') {
+                            payload.flight_details = item;
+                        } else if (type === 'car') {
+                             payload.start_date = carSearch.value.date || new Date().toISOString().split('T')[0];
+                             // Use returnDate if picked, else +3 days
+                             if (carSearch.value.returnDate) {
+                                 payload.end_date = carSearch.value.returnDate;
+                             } else {
+                                const end = new Date(payload.start_date);
+                                end.setDate(end.getDate() + 3);
+                                payload.end_date = end.toISOString().split('T')[0];
+                             }
+                        } 
+                        
+                        // For hotels in search list clikced direct "Add" (if enabled)
+                        // But we changed UI to "View Rooms" for hotels.
+                        
+                        const res = await fetch('/api/cart/add', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (res.ok) {
+                            toggleCart();
+                            await fetchCart();
+                        } else {
+                            throw new Error('Failed to add to cart');
+                        }
+                    } catch (e) {
+                        alert('Error adding to cart: ' + e.message);
+                    }
+                };
+                
+                const bookRoom = async (room) => {
+                    try {
+                        const payload = {
+                            user_id: 'default_user',
+                            item_id: room.id, // Using Room ID to ensure correct room selection and pricing
+                            type: 'hotel',
+                            quantity: 1,
+                            start_date: bookingDates.value.start,
+                            end_date: bookingDates.value.end
+                        };
+                        
+                        const res = await fetch('/api/cart/add', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (res.ok) {
+                            closeResortModal();
+                            toggleCart();
+                            await fetchCart();
+                        } else {
+                            throw new Error('Failed to add to cart');
+                        }
+                    } catch (e) {
+                        alert('Error adding to cart: ' + e.message);
+                    }
+                };
+
+                const checkout = async () => {
+                    try {
+                        const res = await fetch('/api/cart/checkout', {
+                            method: 'POST',
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify({ user_id: 'default_user' })
+                        });
+                        const data = await res.json();
+                        alert('Checkout successful! Status: ' + data.status); // Adjusted: backend sends confirmation_code usually
+                        cartItems.value = [];
+                        toggleCart();
+                    } catch (e) {
+                        alert('Checkout failed');
+                    }
+                }
+
+                const getItemTitle = (item) => {
+                    if (item.inventory_type === 'flight') return `${item.airline} to ${item.destination}`;
+                    if (item.inventory_type === 'hotel') return item.hotel_name || item.property_name || item.room_type;
+                    if (item.inventory_type === 'car') return `${item.brand} ${item.model}`;
+                    return 'Item';
+                };
+
+                const getItemPrice = (item) => {
+                     // Prefer the total_price calculated by the backend which accounts for duration/quantity
+                     if (item.total_price !== undefined) return item.total_price;
+
+                     // Fallback for display purposes if total_price is missing (e.g. optimistic UI updates)
+                     if (item.inventory_type === 'flight') return item.price;
+                     if (item.inventory_type === 'hotel') return item.price_per_night || 200; 
+                     if (item.inventory_type === 'car') return item.price_per_day;
+                     return 0;
+                }
+
+                const cartCount = computed(() => cartItems.value.length);
+                const cartTotal = computed(() => {
+                    return cartItems.value.reduce((total, item) => total + getItemPrice(item), 0);
+                });
+
+                const formatTime = (dateStr) => {
+                    try {
+                        return new Date(dateStr).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    } catch (e) { return '--:--'; }
+                };
+
+                const getDuration = (start, end) => {
+                     try {
+                        const s = new Date(start);
+                        const e = new Date(end);
+                        const diffMs = Math.abs(e - s);
+                        const diffHrs = Math.floor(diffMs / 3600000);
+                        const diffMins = Math.round(((diffMs % 3600000) / 60000));
+                        return `${diffHrs}h ${diffMins}m`;
+                     } catch (e) { return ''; }
+                }
+
+                onMounted(() => {
+                    fetchCart();
+                    fetchTopResorts();
+                    fetchAllResorts();
+                });
+
+                return {
+                    currentTab,
+                    tabs,
+                    results,
+                    topResorts,
+                    allResorts,
+                    loading,
+                    error,
+                    hasSearched,
+                    flightSearch,
+                    hotelSearch,
+                    carSearch,
+                    searchFlights,
+                    searchHotels,
+                    searchHotelsAll,
+                    searchCars,
+                    isCartOpen,
+                    toggleCart,
+                    cartItems,
+                    addToCart,
+                    bookRoom,
+                    openResortModal,
+                    closeResortModal,
+                    selectedResort,
+                    bookingDates,
+                    getItemTitle,
+                    getItemPrice,
+                    cartCount,
+                    cartTotal,
+                    checkout,
+                    formatTime,
+                    getDuration,
+                    switchTab
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

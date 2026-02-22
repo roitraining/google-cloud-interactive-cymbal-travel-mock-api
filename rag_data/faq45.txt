@@ -1,0 +1,2 @@
+Question: What payment methods do you accept for Hotels?
+Answer: We accept all major credit cards, PayPal, and Cymbal Pay for all Hotels bookings.

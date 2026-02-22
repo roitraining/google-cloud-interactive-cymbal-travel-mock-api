@@ -1,0 +1,2 @@
+Question: Can I modify my Flights reservation?
+Answer: Yes, modifications to Flights are allowed up to 48 hours before the trip, subject to availability and fare differences.
