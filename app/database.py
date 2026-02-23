@@ -185,6 +185,7 @@ def get_top_resorts(limit: int = 3):
     return random.sample(all_hotels, limit)
 
 
+
 COL_FLIGHTS = "flights"
 
 def search_flights(origin: str, destination: str, date: str):
