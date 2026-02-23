@@ -15,7 +15,7 @@ SERVICE_URL = os.getenv("SERVICE_URL", "http://localhost:8080")
 SERVICE_NAME = "Cymbal Travel Mock API"
 
 # Project ID (Optional check)
-PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
+PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "gcloud-interactive-courses")
 try:
     if not PROJECT_ID:
         import subprocess
