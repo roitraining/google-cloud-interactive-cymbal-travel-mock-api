@@ -1,13 +1,16 @@
 import os
 import time
+from dotenv import load_dotenv
 from google.cloud import storage
 from google import genai
 from google.genai import types
 
+load_dotenv()
+
 # --- Configuration ---
 PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT")
 LOCATION = "us-central1"
-BUCKET_NAME = "cymbal-travel-images-dar"
+BUCKET_NAME = os.environ.get("GCS_IMAGE_BUCKET", "cymbal-travel-images-dar")
 MODEL_NAME = "gemini-2.5-flash-image"
 
 # Define the car inventory manually essentially matching app/database.py

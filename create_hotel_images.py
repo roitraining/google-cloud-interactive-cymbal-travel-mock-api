@@ -1,9 +1,12 @@
 import os
 import time
 import sys
+from dotenv import load_dotenv
 from google.cloud import storage
 from google import genai
 from google.genai import types
+
+load_dotenv()
 
 # Add the current directory to sys.path so we can import app
 sys.path.append(os.getcwd())
@@ -13,7 +16,7 @@ from app import database
 # --- Configuration ---
 PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT")
 LOCATION = "us-central1"
-BUCKET_NAME = "cymbal-travel-images-dar"
+BUCKET_NAME = os.environ.get("GCS_IMAGE_BUCKET", "cymbal-travel-images-dar")
 MODEL_NAME = "gemini-2.5-flash-image"
 
 def generate_image(client, prompt, output_file):

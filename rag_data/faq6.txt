@@ -1,0 +1,3 @@
+Topic: Gym
+Question: Do you have a gym?
+Answer: Yes, our fitness center is open 24/7 for all guests.

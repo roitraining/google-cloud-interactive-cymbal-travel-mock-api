@@ -1,0 +1,3 @@
+Topic: Doctor
+Question: Is there a doctor on call?
+Answer: Guest services can arrange for medical assistance 24/7 if needed.

@@ -1,0 +1,3 @@
+Topic: Payment
+Question: Do you accept cash?
+Answer: We are a cashless resort. All major credit cards and room charges are accepted.
