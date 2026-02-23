@@ -420,22 +420,11 @@ def remove_from_cart(cart_remove_request):
 # --- User Management ---
 
 def create_user(username, password):
-    if not db:
-        return False
-    user_ref = db.collection(COL_USERS).document(username)
-    if user_ref.get().exists:
-        return False
-    user_ref.set({"username": username, "password": password})
+    # Mock behavior: Always return True, don't save to DB
     return True
 
 def verify_user(username, password):
-    if not db:
-        return True 
-    user_ref = db.collection(COL_USERS).document(username)
-    doc = user_ref.get()
-    if doc.exists:
-        data = doc.to_dict()
-        return data.get("password") == password 
-    return False
+    # Mock behavior: Always allow login for any password
+    return True
 
 
