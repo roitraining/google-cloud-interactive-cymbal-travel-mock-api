@@ -11,9 +11,10 @@ from app.models import (
     FlightSearchRequest, HotelSearchRequest, CarSearchRequest,
     CartItemDetail, User, LoginRequest, 
     CartAddRequest, CartRemoveRequest, CheckoutRequest, OrderStatusResponse,
-    CartModel
+    CartModel, ChatRequest
 )
 from app import database
+from app import chat
 from app import config
 
 app = FastAPI(
@@ -59,6 +60,17 @@ async def save_inventory():
         return {"message": "Travel inventory saved successfully"}
     else:
         raise HTTPException(status_code=500, detail="Failed to save inventory")
+
+@api_router.post("/chat", tags=["Chat"])
+async def chat_endpoint(request: ChatRequest):
+    """
+    Interact with the Vertex AI Agent.
+    """
+    try:
+        response = await chat.process_message(request.user_id, request.message)
+        return {"response": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # --- FLIGHTS ---
 @api_router.get("/flights/search", tags=["Flights"], response_model=List[Flight])

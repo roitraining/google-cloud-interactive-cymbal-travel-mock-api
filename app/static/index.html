@@ -11,6 +11,8 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Marked for Markdown processing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <style>
         [v-cloak] { display: none; }
@@ -24,6 +26,14 @@
         .fade-enter-from, .fade-leave-to {
             opacity: 0;
         }
+        /* Markdown Styles for Chat */
+        .markdown-body p { margin-bottom: 0.5rem; }
+        .markdown-body p:last-child { margin-bottom: 0; }
+        .markdown-body ul { list-style-type: disc; margin-left: 1.25rem; margin-bottom: 0.5rem; }
+        .markdown-body ol { list-style-type: decimal; margin-left: 1.25rem; margin-bottom: 0.5rem; }
+        .markdown-body a { color: #0284c7; text-decoration: underline; }
+        .markdown-body strong { font-weight: 600; }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 { font-weight: 700; margin-top: 0.5rem; margin-bottom: 0.25rem; }
     </style>
     <script>
         tailwind.config = {
@@ -510,10 +520,49 @@
             </div>
         </div>
 
+
+        <!-- Chatbot Bubble -->
+        <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-4">
+            <!-- Chat Window -->
+            <div v-if="isChatOpen" class="w-80 h-[calc(100vh-8rem)] bg-white rounded-lg shadow-xl flex flex-col overflow-hidden border border-gray-200 transition-all duration-300 ease-in-out">
+                <div class="bg-travel-600 p-4 flex justify-between items-center text-white">
+                    <h3 class="font-bold">Lumi - Your Travel Agent</h3>
+                    <button @click="toggleChat" class="hover:text-gray-200">
+                        <i class="ph ph-x text-lg"></i>
+                    </button>
+                </div>
+                <!-- Messages Area -->
+                <div class="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col space-y-3" ref="chatContainer">
+                    <div v-for="(msg, idx) in chatMessages" :key="idx" 
+                         :class="['p-3 rounded-lg text-sm max-w-[80%]', 
+                                  msg.role === 'user' ? 'bg-travel-600 text-white self-end rounded-br-none' : 'bg-white border border-gray-200 text-gray-800 self-start rounded-bl-none']">
+                        <div v-if="msg.role === 'bot'" v-html="formatMessage(msg.text)" class="markdown-body"></div>
+                        <div v-else>{{ msg.text }}</div>
+                    </div>
+                </div>
+                <!-- Input Area -->
+                <div class="p-4 bg-white border-t border-gray-200">
+                    <div class="flex gap-2">
+                        <input v-model="userMessage" @keyup.enter="sendMessage" type="text" placeholder="Type a message..." 
+                               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-500 text-sm">
+                        <button @click="sendMessage" class="bg-travel-600 text-white p-2 rounded-lg hover:bg-travel-700 transition-colors">
+                            <i class="ph ph-paper-plane-right text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Launcher Bubble -->
+            <button @click="toggleChat" 
+                class="w-14 h-14 bg-travel-600 rounded-full shadow-lg flex items-center justify-center text-white hover:bg-travel-700 transition-transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-travel-300">
+                <i :class="['ph text-2xl', isChatOpen ? 'ph-x' : 'ph-chat-circle-dots']"></i>
+            </button>
+        </div>
+
     </div>
 
     <script>
-        const { createApp, ref, computed, onMounted } = Vue;
+        const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 
         createApp({
             setup() {
@@ -548,8 +597,17 @@
                 const hotelSearch = ref({ query: '' });
                 const carSearch = ref({ location: '', date: defaults.start, returnDate: defaults.end });
 
+
                 const isCartOpen = ref(false);
                 const cartItems = ref([]);
+
+                // Chatbot State
+                const isChatOpen = ref(false);
+                const chatMessages = ref([
+                    { role: 'bot', text: 'Hello! How can I help you today?' }
+                ]);
+                const userMessage = ref('');
+                const chatContainer = ref(null);
                 
                 // Resort Modal State
                 const selectedResort = ref(null);
@@ -590,6 +648,67 @@
                 };
 
                 const toggleCart = () => isCartOpen.value = !isCartOpen.value;
+                
+                // Chatbot Functions
+                const toggleChat = () => {
+                    isChatOpen.value = !isChatOpen.value;
+                };
+
+                const sendMessage = async () => {
+                    const text = userMessage.value.trim();
+                    if (!text) return;
+                    
+                    chatMessages.value.push({ role: 'user', text: text });
+                    userMessage.value = '';
+                    
+                    try {
+                        // Sending to real agent
+                        const res = await fetch('/api/chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                user_id: user.value || 'guest', 
+                                message: text 
+                            })
+                        });
+                        
+                        if (res.ok) {
+                            const data = await res.json();
+                            chatMessages.value.push({ role: 'bot', text: data.response });
+                        } else {
+                             // Fallback or error message
+                            chatMessages.value.push({ role: 'bot', text: "Sorry, I'm having trouble connecting right now." });
+                        }
+                    } catch (e) {
+                        console.error('Chat error:', e);
+                        chatMessages.value.push({ role: 'bot', text: "An error occurred while sending your message." });
+                    }
+                };
+
+                // Auto-scroll chat
+                const scrollToBottom = async () => {
+                    await nextTick();
+                    if (chatContainer.value) {
+                        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+                    }
+                };
+
+                watch(chatMessages, () => {
+                    scrollToBottom();
+                }, { deep: true });
+                
+                // Also scroll when chat opens
+                watch(isChatOpen, (newVal) => {
+                    if (newVal) {
+                        scrollToBottom();
+                    }
+                });
+
+                // Helper to format messages with markdown
+                const formatMessage = (text) => {
+                    return marked.parse(text);
+                }
+
                 const toggleLoginMode = () => {
                     loginMode.value = loginMode.value === 'login' ? 'create' : 'login';
                     loginError.value = '';
@@ -951,6 +1070,13 @@
                     searchCars,
                     isCartOpen,
                     toggleCart,
+                    isChatOpen,
+                    chatMessages,
+                    userMessage,
+                    chatContainer,
+                    toggleChat,
+                    sendMessage,
+                    formatMessage,
                     user,
                     isLoggedIn,
                     showLogin,

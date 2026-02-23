@@ -100,3 +100,7 @@ class CartModel(BaseModel):
     items: List[CartItemDetail]
     total_price: float
 
+class ChatRequest(BaseModel):
+    user_id: str
+    message: str
+

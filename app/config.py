@@ -16,10 +16,20 @@ SERVICE_NAME = "Cymbal Travel Mock API"
 
 # Project ID (Optional check)
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
+try:
+    if not PROJECT_ID:
+        import subprocess
+        PROJECT_ID = subprocess.check_output(["gcloud", "config", "get-value", "project"], text=True).strip()
+except Exception:
+    pass
 
 # Cloud Storage Bucket
 GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "cymbal-travel-images-dar")
 BASE_IMAGE_URL = f"https://storage.googleapis.com/{GCS_BUCKET_NAME}"
+
+# Agent Engine Configuration
+AGENT_ENGINE_RESOURCE_ID = os.getenv("AGENT_ENGINE_RESOURCE_ID", "4329730555135393792")
+AGENT_LOCATION = os.getenv("AGENT_LOCATION", "us-central1")
 
 def configure_environment():
     """
