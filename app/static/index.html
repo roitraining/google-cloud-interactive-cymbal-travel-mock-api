@@ -526,7 +526,7 @@
             <!-- Chat Window -->
             <div v-if="isChatOpen" class="w-80 h-[calc(100vh-8rem)] bg-white rounded-lg shadow-xl flex flex-col overflow-hidden border border-gray-200 transition-all duration-300 ease-in-out">
                 <div class="bg-travel-600 p-4 flex justify-between items-center text-white">
-                    <h3 class="font-bold">Lumi - Your Travel Agent</h3>
+                    <h3 class="font-bold">Lumi - Your Destination Agent</h3>
                     <button @click="toggleChat" class="hover:text-gray-200">
                         <i class="ph ph-x text-lg"></i>
                     </button>
@@ -538,6 +538,14 @@
                                   msg.role === 'user' ? 'bg-travel-600 text-white self-end rounded-br-none' : 'bg-white border border-gray-200 text-gray-800 self-start rounded-bl-none']">
                         <div v-if="msg.role === 'bot'" v-html="formatMessage(msg.text)" class="markdown-body"></div>
                         <div v-else>{{ msg.text }}</div>
+                    </div>
+                    <!-- Typing Indicator -->
+                    <div v-if="isTyping" class="p-3 bg-white border border-gray-200 text-gray-800 self-start rounded-lg rounded-bl-none max-w-[80%]">
+                        <div class="flex space-x-1 items-center h-5">
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                        </div>
                     </div>
                 </div>
                 <!-- Input Area -->
@@ -606,6 +614,7 @@
                 const chatMessages = ref([
                     { role: 'bot', text: 'Hello! How can I help you today?' }
                 ]);
+                const isTyping = ref(false);
                 const userMessage = ref('');
                 const chatContainer = ref(null);
                 
@@ -660,6 +669,7 @@
                     
                     chatMessages.value.push({ role: 'user', text: text });
                     userMessage.value = '';
+                    isTyping.value = true;
                     
                     try {
                         // Sending to real agent
@@ -682,6 +692,8 @@
                     } catch (e) {
                         console.error('Chat error:', e);
                         chatMessages.value.push({ role: 'bot', text: "An error occurred while sending your message." });
+                    } finally {
+                        isTyping.value = false;
                     }
                 };
 
@@ -696,6 +708,10 @@
                 watch(chatMessages, () => {
                     scrollToBottom();
                 }, { deep: true });
+                
+                watch(isTyping, () => {
+                   scrollToBottom();
+                });
                 
                 // Also scroll when chat opens
                 watch(isChatOpen, (newVal) => {
@@ -1072,6 +1088,7 @@
                     toggleCart,
                     isChatOpen,
                     chatMessages,
+                    isTyping,
                     userMessage,
                     chatContainer,
                     toggleChat,
