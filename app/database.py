@@ -185,6 +185,8 @@ def get_top_resorts(limit: int = 3):
     return random.sample(all_hotels, limit)
 
 
+COL_FLIGHTS = "flights"
+
 def search_flights(origin: str, destination: str, date: str):
     """Generates mock flights."""
     # Deterministic random based on input so it feels consistent
@@ -226,8 +228,9 @@ def search_flights(origin: str, destination: str, date: str):
             
         price = round(base_price + random.randint(-50, 50))
         
+        flight_id = str(uuid.uuid4())
         flight = {
-            "id": str(uuid.uuid4()),
+            "id": flight_id,
             "airline": random.choice(airlines),
             "flight_number": flight_num,
             "departure_city": origin,
@@ -236,9 +239,42 @@ def search_flights(origin: str, destination: str, date: str):
             "arrival_time": arr_dt.isoformat(),
             "price": float(price),
             "seat_class": random.choice(["Economy", "Business"]),
-            "connections": connections
+            "connections": connections,
+            "created_at": datetime.now().isoformat()
         }
         results.append(flight)
+
+    if db:
+        # Cleanup old flights first (older than 24 hours)
+        try:
+            cutoff = (datetime.now() - timedelta(hours=24)).isoformat()
+            flights_ref = db.collection(COL_FLIGHTS)
+            old_flights = flights_ref.where("created_at", "<", cutoff).stream()
+            
+            # Batch delete
+            batch = db.batch()
+            count = 0
+            for doc in old_flights:
+                batch.delete(doc.reference)
+                count += 1
+                if count >= 400: # Firestore batch limit is 500
+                    batch.commit()
+                    batch = db.batch()
+                    count = 0
+            if count > 0:
+                batch.commit()
+                print("Cleaned up old flights.")
+
+            # Save new flights
+            batch = db.batch()
+            for f in results:
+                 ref = flights_ref.document(f["id"])
+                 batch.set(ref, f)
+            batch.commit()
+            print(f"Saved {len(results)} generated flights to Firestore.")
+
+        except Exception as e:
+            print(f"Error managing flight persistence: {e}")
         
     return results
 
@@ -284,10 +320,22 @@ def add_to_cart(cart_add_request):
     price = 0.0
     
     if item_type == "flight":
+        # Check if full details provided (Frontend behavior)
         if cart_add_request.flight_details:
             detail_obj = cart_add_request.flight_details.dict()
             price = detail_obj.get("price", 0.0)
-    
+        # Otherwise try to fetch from Firestore (Agent behavior)
+        elif db and cart_add_request.item_id:
+             try:
+                 flight_doc = db.collection(COL_FLIGHTS).document(cart_add_request.item_id).get()
+                 if flight_doc.exists:
+                     detail_obj = flight_doc.to_dict()
+                     # Clean internal fields if needed
+                     detail_obj.pop('created_at', None)
+                     price = detail_obj.get("price", 0.0)
+             except Exception as e:
+                 print(f"Error fetching flight {cart_add_request.item_id}: {e}")
+
     elif item_type == "car":
         try:
             car_doc = db.collection(COL_CARS).document(cart_add_request.item_id).get()
