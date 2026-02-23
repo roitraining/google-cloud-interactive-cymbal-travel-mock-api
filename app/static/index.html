@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cymbal Travel</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Vue.js 3 -->
@@ -50,10 +51,10 @@
         <nav class="bg-white shadow-sm sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
-                    <div class="flex items-center">
+                    <a href="/" class="flex items-center">
                         <i class="ph ph-airplane-tilt text-3xl text-travel-600 mr-2"></i>
                         <span class="text-2xl font-bold text-gray-900 tracking-tight">Cymbal<span class="text-travel-600">Travel</span></span>
-                    </div>
+                    </a>
                     <div class="flex items-center space-x-4">
                         <button @click="toggleCart" class="relative p-2 text-gray-600 hover:text-travel-600 transition-colors">
                             <i class="ph ph-suitcase text-2xl"></i>
@@ -137,15 +138,12 @@
                             <div v-if="currentTab === 'hotels'" class="space-y-4">
                                 <div class="relative">
                                     <i class="ph ph-map-pin absolute left-3 top-3 text-gray-400 text-xl"></i>
-                                    <select v-model="hotelSearch.query" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-travel-500 focus:border-travel-500 outline-none bg-white appearance-none">
-                                        <option value="" disabled selected>Select Resort</option>
-                                        <option v-for="resort in allResorts" :key="resort.id" :value="resort.location">
+                                    <input v-model="hotelSearch.query" list="hotel-locations" type="text" placeholder="Search by destination or resort name" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-travel-500 focus:border-travel-500 outline-none">
+                                    <datalist id="hotel-locations">
+                                        <option v-for="resort in allResorts" :key="resort.id" :value="resort.property_name">
                                             {{ resort.property_name }} ({{ resort.location }})
                                         </option>
-                                    </select>
-                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                    </div>
+                                    </datalist>
                                 </div>
                                 <div class="flex gap-4">
                                     <button @click="searchHotels" :disabled="loading" class="flex-1 px-8 py-2 bg-travel-600 text-white font-semibold rounded-lg hover:bg-travel-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
@@ -260,8 +258,10 @@
                                     <div class="text-xs text-travel-600 mb-1 font-semibold">
                                         {{ getDuration(flight.departure_time, flight.arrival_time) }}
                                     </div>
-                                    <div class="w-full border-t border-gray-300 relative flex justify-center">
-                                        <i class="ph ph-airplane text-travel-600 absolute top-1/2 transform -translate-y-1/2 bg-gray-50 px-1 rotate-90 text-lg"></i>
+                                    <!-- Visual connector -->
+                                    <div class="w-full relative h-4 flex items-center justify-center">
+                                        <div class="absolute w-full border-t border-gray-300 top-1/2 transform -translate-y-1/2"></div>
+                                        <i class="ph ph-airplane text-travel-600 bg-gray-50 px-1 rotate-90 text-lg z-10 relative"></i>
                                     </div>
                                     <div class="text-xs text-gray-500 mt-1">
                                         {{ flight.connections === 0 ? 'Non-stop' : `${flight.connections} stop${flight.connections > 1 ? 's' : ''}` }}
@@ -724,7 +724,7 @@
                              body: JSON.stringify({ user_id: 'default_user' })
                         });
                         const data = await res.json();
-                        alert('Checkout successful! Status: ' + data.status); // Adjusted: backend sends confirmation_code usually
+                        alert(data.message + '\nConfirmation: ' + data.confirmation_code); 
                         cartItems.value = [];
                         toggleCart();
                     } catch (e) {

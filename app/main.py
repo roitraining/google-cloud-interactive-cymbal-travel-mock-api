@@ -34,6 +34,10 @@ app.add_middleware(
 # Mount static directory for the frontend
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse('app/static/favicon.svg')
+
 @app.get("/", tags=["UI"])
 async def root():
     return FileResponse('app/static/index.html')

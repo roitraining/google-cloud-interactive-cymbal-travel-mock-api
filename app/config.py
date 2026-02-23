@@ -17,6 +17,10 @@ SERVICE_NAME = "Cymbal Travel Mock API"
 # Project ID (Optional check)
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 
+# Cloud Storage Bucket
+GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "cymbal-travel-images-dar")
+BASE_IMAGE_URL = f"https://storage.googleapis.com/{GCS_BUCKET_NAME}"
+
 def configure_environment():
     """
     Sets up environment variables if they are not already set.

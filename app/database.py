@@ -27,14 +27,15 @@ COL_USERS = "travel-users"
 # --- Initialization Data (Mock) ---
 
 MOCK_CARS = [
-    {"id": "economy", "type": "Economy", "brand": "Cymbal Rentals", "model": "Compact", "year": 2024, "image_url": "https://storage.googleapis.com/cymbal-travel-images-dar/economy.jpg", "price_per_day": 45.0, "rating": 4.5, "description": "Fuel efficient and compact."},
-    {"id": "sedan", "type": "Sedan", "brand": "Cymbal Rentals", "model": "Comfort", "year": 2024, "image_url": "https://storage.googleapis.com/cymbal-travel-images-dar/sedan.jpg", "price_per_day": 55.0, "rating": 4.6, "description": "Comfortable sedan for your journey."},
-    {"id": "suv", "type": "SUV", "brand": "Cymbal Rentals", "model": "Explorer", "year": 2024, "image_url": "https://storage.googleapis.com/cymbal-travel-images-dar/suv.jpg", "price_per_day": 85.0, "rating": 4.7, "description": "Spacious for the whole family."},
-    {"id": "sports", "type": "Sports", "brand": "Cymbal Rentals", "model": "Racer", "year": 2024, "image_url": "https://storage.googleapis.com/cymbal-travel-images-dar/sports.jpg", "price_per_day": 120.0, "rating": 4.8, "description": "Experience the thrill of the road."},
-    {"id": "luxury", "type": "Luxury", "brand": "Cymbal Rentals", "model": "S-Class", "year": 2024, "image_url": "https://storage.googleapis.com/cymbal-travel-images-dar/luxury.jpg", "price_per_day": 150.0, "rating": 4.9, "description": "Travel in style and comfort."},
-    {"id": "pickup", "type": "Pickup", "brand": "Cymbal Rentals", "model": "Hauler", "year": 2024, "image_url": "https://storage.googleapis.com/cymbal-travel-images-dar/pickup.jpg", "price_per_day": 80.0, "rating": 4.5, "description": "Rugged and reliable for any terrain."}
+    {"id": "economy", "type": "Economy", "brand": "Cymbal Rentals", "model": "Compact", "year": 2024, "image_url": f"{config.BASE_IMAGE_URL}/economy.jpg", "price_per_day": 45.0, "rating": 4.5, "description": "Fuel efficient and compact."},
+    {"id": "sedan", "type": "Sedan", "brand": "Cymbal Rentals", "model": "Comfort", "year": 2024, "image_url": f"{config.BASE_IMAGE_URL}/sedan.jpg", "price_per_day": 55.0, "rating": 4.6, "description": "Comfortable sedan for your journey."},
+    {"id": "suv", "type": "SUV", "brand": "Cymbal Rentals", "model": "Explorer", "year": 2024, "image_url": f"{config.BASE_IMAGE_URL}/suv.jpg", "price_per_day": 85.0, "rating": 4.7, "description": "Spacious for the whole family."},
+    {"id": "sports", "type": "Sports", "brand": "Cymbal Rentals", "model": "Racer", "year": 2024, "image_url": f"{config.BASE_IMAGE_URL}/sports.jpg", "price_per_day": 120.0, "rating": 4.8, "description": "Experience the thrill of the road."},
+    {"id": "luxury", "type": "Luxury", "brand": "Cymbal Rentals", "model": "S-Class", "year": 2024, "image_url": f"{config.BASE_IMAGE_URL}/luxury.jpg", "price_per_day": 150.0, "rating": 4.9, "description": "Travel in style and comfort."},
+    {"id": "pickup", "type": "Pickup", "brand": "Cymbal Rentals", "model": "Hauler", "year": 2024, "image_url": f"{config.BASE_IMAGE_URL}/pickup.jpg", "price_per_day": 80.0, "rating": 4.5, "description": "Rugged and reliable for any terrain."}
 ]
 
+# Keep basic mock hotels as fallback, but save_inventory uses full list
 MOCK_HOTELS = [
     {
         "id": "hotel-dt-1", "property_name": "Cymbal Hotel - Downtown", "location": "San Francisco", "description": "Central location near all amenities.", "image_url": "/static/images/hotel_downtown.jpg", "rating": 4.2, "amenities": ["Wifi", "Gym", "Restaurant"],
@@ -44,29 +45,27 @@ MOCK_HOTELS = [
             {"id": "rm-dt-s", "hotel_id": "hotel-dt-1", "room_type": "Suite", "price_per_night": 450.0, "description": "Luxury suite with living area.", "image_url": "/static/images/room_suite.jpg"},
             {"id": "rm-dt-std", "hotel_id": "hotel-dt-1", "room_type": "Standard", "price_per_night": 180.0, "description": "Standard room, great value.", "image_url": "/static/images/room_standard.jpg"}
         ]
-    },
-    {
-        "id": "hotel-bch-1", "property_name": "Cymbal Resort - Beachside", "location": "Miami", "description": "Relax strictly on the beach.", "image_url": "/static/images/hotel_beach.jpg", "rating": 4.8, "amenities": ["Pool", "Spa", "Beach Access", "Bar"],
-        "rooms": [
-            {"id": "rm-bch-k", "hotel_id": "hotel-bch-1", "room_type": "King", "price_per_night": 350.0, "description": "Ocean view King.", "image_url": "/static/images/room_king_ocean.jpg"},
-            {"id": "rm-bch-q", "hotel_id": "hotel-bch-1", "room_type": "Queen", "price_per_night": 300.0, "description": "Garden view Queen.", "image_url": "/static/images/room_queen_garden.jpg"},
-            {"id": "rm-bch-s", "hotel_id": "hotel-bch-1", "room_type": "Suite", "price_per_night": 600.0, "description": "Penthouse suite.", "image_url": "/static/images/room_suite_ocean.jpg"},
-            {"id": "rm-bch-std", "hotel_id": "hotel-bch-1", "room_type": "Standard", "price_per_night": 250.0, "description": "Standard room.", "image_url": "/static/images/room_standard_resort.jpg"}
-        ]
-    },
-    {
-        "id": "hotel-ap-1", "property_name": "Cymbal Inn - Airport", "location": "Denver", "description": "Convenient for layovers.", "image_url": "/static/images/hotel_airport.jpg", "rating": 3.9, "amenities": ["Shuttle", "Breakfast", "Wifi"],
-        "rooms": [
-            {"id": "rm-ap-k", "hotel_id": "hotel-ap-1", "room_type": "King", "price_per_night": 150.0, "description": "Quiet King room.", "image_url": "/static/images/room_king_simple.jpg"},
-            {"id": "rm-ap-q", "hotel_id": "hotel-ap-1", "room_type": "Queen", "price_per_night": 120.0, "description": "Double Queen.", "image_url": "/static/images/room_queen_double.jpg"},
-            {"id": "rm-ap-s", "hotel_id": "hotel-ap-1", "room_type": "Suite", "price_per_night": 200.0, "description": "Business suite.", "image_url": "/static/images/room_suite_biz.jpg"},
-            {"id": "rm-ap-std", "hotel_id": "hotel-ap-1", "room_type": "Standard", "price_per_night": 100.0, "description": "Basic room.", "image_url": "/static/images/room_standard_basic.jpg"}
-        ]
     }
 ]
 
+LOCATIONS = [
+    "Bali, Indonesia", "Santorini, Greece", "Maui, Hawaii", "Bora Bora, French Polynesia", 
+    "Maldives", "Phuket, Thailand", "Kyoto, Japan", "Machu Picchu, Peru", 
+    "Amalfi Coast, Italy", "Costa Rica", "Seychelles", "Fiji", 
+    "Banff, Canada", "Queenstown, New Zealand", "Marrakech, Morocco", "Dubai, UAE", 
+    "Cape Town, South Africa", "Great Barrier Reef, Australia", "Petra, Jordan", "Galapagos Islands, Ecuador",
+    "Barcelona, Spain", "Paris, France", "Rome, Italy", "Venice, Italy", 
+    "New York City, USA", "Tokyo, Japan", "Istanbul, Turkey", "Rio de Janeiro, Brazil", 
+    "Sydney, Australia", "London, UK", "Cairo, Egypt", "Reykjavik, Iceland", 
+    "Dubrovnik, Croatia", "Cancun, Mexico", "Prague, Czech Republic", "Amsterdam, Netherlands",
+    "Lisbon, Portugal", "Hanoi, Vietnam", "Buenos Aires, Argentina", "Budapest, Hungary",
+    "Zanzibar, Tanzania", "Lofoten Islands, Norway", "Cinque Terre, Italy", "Siem Reap, Cambodia",
+    "Serengeti, Tanzania", "Patagonia, Chile", "Antigua, Guatemala", "Cartagena, Colombia",
+    "Ubud, Indonesia", "Cappadocia, Turkey"
+]
+
 def save_inventory():
-    """Initializes the Car and Hotel inventory in Firestore."""
+    """Initializes the Car and Hotel inventory in Firestore using the full list."""
     if not db:
         return False
     
@@ -77,15 +76,68 @@ def save_inventory():
         ref = db.collection(COL_CARS).document(car["id"])
         batch.set(ref, car)
         
-    # Save Hotels (and rooms structure flattened or nested? Nested is easier for read-heavy)
-    # We will save Hotel metadata in one doc, rooms embedded or separate?
-    # Let's save rooms strictly as a field "rooms" in the hotel doc for simplicity in this mock.
-    for hotel in MOCK_HOTELS:
-        ref = db.collection(COL_HOTELS).document(hotel["id"])
-        batch.set(ref, hotel)
+    # Save Hotels - Generate 50 resorts
+    # First, delete existing to prevent duplicates if IDs change or to clean up
+    # Note: Deleting in transaction/batch is harder with large datasets, but for 50 it's ok to overwrite
+    # if we use consistent IDs. But here we generate UUIDs. 
+    # Let's delete all first.
+    
+    try:
+        docs = db.collection(COL_HOTELS).list_documents()
+        for doc in docs:
+            doc.delete()
+    except Exception as e:
+        print(f"Error clearing hotels: {e}")
+
+    # Create new resorts
+    count = 0
+    # Batch limit is 500. We have 50 items + 6 cars = 56 ops. Safe.
+    
+    for i, location in enumerate(LOCATIONS):
+        hotel_id = str(uuid.uuid4())
+        city = location.split(",")[0].strip()
+        property_name = f"Cymbal Resort {city}"
+        slug_location = location.lower().replace(",", "").replace(" ", "-")
+        hotel_image_url = f"{config.BASE_IMAGE_URL}/resort-{slug_location}.jpg"
+        
+        description = f"Experience luxury at {property_name} in {location}. Enjoy world-class amenities, breathtaking views, and unparalleled service."
+        
+        resort_data = {
+            "id": hotel_id,
+            "property_name": property_name,
+            "location": location,
+            "description": description,
+            "image_url": hotel_image_url,
+            "rating": round(random.uniform(4.0, 5.0), 1),
+            "amenities": ["Pool", "Spa", "Fine Dining", "Concierge", "Beach/Mountain View", "Wifi"],
+            "rooms": []
+        }
+        
+        room_types = [
+            {"type": "Standard Room", "desc": "A comfortable room with a view.", "slug": "standard", "base_price": random.randint(200, 400)},
+            {"type": "Suite", "desc": "Spacious suite with multiple rooms and a full kitchen.", "slug": "suite", "base_price": random.randint(500, 900)},
+            {"type": "Cabin", "desc": "Private separate building with 2 bedrooms, living area, and kitchen.", "slug": "cabin", "base_price": random.randint(1000, 2000)}
+        ]
+        
+        for rt in room_types:
+            room_id = str(uuid.uuid4())
+            room_image_url = f"{config.BASE_IMAGE_URL}/resort-{slug_location}-{rt['slug']}.jpg"
+            room_data = {
+                "id": room_id,
+                "hotel_id": hotel_id,
+                "room_type": rt["type"],
+                "price_per_night": float(rt["base_price"]),
+                "description": rt["desc"],
+                "image_url": room_image_url
+            }
+            resort_data["rooms"].append(room_data)
+        
+        ref = db.collection(COL_HOTELS).document(hotel_id)
+        batch.set(ref, resort_data)
+        count += 1
         
     batch.commit()
-    print("Travel inventory initialized.")
+    print(f"Travel inventory initialized. Created {count} resorts and {len(MOCK_CARS)} cars.")
     return True
 
 # --- Retrieval Functions ---
@@ -102,17 +154,17 @@ def search_cars(location: str = None, date: str = None):
 
 def search_hotels(location: str = None, date: str = None):
     if not db:
-        return MOCK_HOTELS
-    
-    # Filter by location name match
-    hotels_ref = db.collection(COL_HOTELS)
-    docs = hotels_ref.stream()
-    all_hotels = [doc.to_dict() for doc in docs]
-    
+        all_hotels = MOCK_HOTELS
+    else:
+        # Filter by location name match
+        hotels_ref = db.collection(COL_HOTELS)
+        docs = hotels_ref.stream()
+        all_hotels = [doc.to_dict() for doc in docs]
+
     if not location:
         return all_hotels
         
-    filtered = [h for h in all_hotels if location.lower() in h.get("location", "").lower()]
+    filtered = [h for h in all_hotels if location.lower() in h.get("location", "").lower() or location.lower() in h.get("property_name", "").lower()]
     return filtered if filtered else all_hotels # Return all if no match found (for demo)
 
 def get_top_resorts(limit: int = 3):
