@@ -38,12 +38,12 @@ MOCK_CARS = [
 # Keep basic mock hotels as fallback, but save_inventory uses full list
 MOCK_HOTELS = [
     {
-        "id": "hotel-dt-1", "property_name": "Cymbal Hotel - Downtown", "location": "San Francisco", "description": "Central location near all amenities.", "image_url": "/static/images/hotel_downtown.jpg", "rating": 4.2, "amenities": ["Wifi", "Gym", "Restaurant"],
+        "id": "hotel-dt-1", "property_name": "Cymbal Hotel - Downtown", "location": "San Francisco", "description": "Central location near all amenities.", "image_url": f"{config.BASE_IMAGE_URL}/hotel-downtown.jpg", "rating": 4.2, "amenities": ["Wifi", "Gym", "Restaurant"],
         "rooms": [
-            {"id": "rm-dt-k", "hotel_id": "hotel-dt-1", "room_type": "King", "price_per_night": 250.0, "description": "Spacious King bed with city view.", "image_url": "/static/images/room_king.jpg"},
-            {"id": "rm-dt-q", "hotel_id": "hotel-dt-1", "room_type": "Queen", "price_per_night": 200.0, "description": "Cozy Queen bed.", "image_url": "/static/images/room_queen.jpg"},
-            {"id": "rm-dt-s", "hotel_id": "hotel-dt-1", "room_type": "Suite", "price_per_night": 450.0, "description": "Luxury suite with living area.", "image_url": "/static/images/room_suite.jpg"},
-            {"id": "rm-dt-std", "hotel_id": "hotel-dt-1", "room_type": "Standard", "price_per_night": 180.0, "description": "Standard room, great value.", "image_url": "/static/images/room_standard.jpg"}
+            {"id": "rm-dt-k", "hotel_id": "hotel-dt-1", "room_type": "King", "price_per_night": 250.0, "description": "Spacious King bed with city view.", "image_url": f"{config.BASE_IMAGE_URL}/room-king.jpg"},
+            {"id": "rm-dt-q", "hotel_id": "hotel-dt-1", "room_type": "Queen", "price_per_night": 200.0, "description": "Cozy Queen bed.", "image_url": f"{config.BASE_IMAGE_URL}/room-queen.jpg"},
+            {"id": "rm-dt-s", "hotel_id": "hotel-dt-1", "room_type": "Suite", "price_per_night": 450.0, "description": "Luxury suite with living area.", "image_url": f"{config.BASE_IMAGE_URL}/room-suite.jpg"},
+            {"id": "rm-dt-std", "hotel_id": "hotel-dt-1", "room_type": "Standard", "price_per_night": 180.0, "description": "Standard room, great value.", "image_url": f"{config.BASE_IMAGE_URL}/room-standard.jpg"}
         ]
     }
 ]
@@ -410,7 +410,7 @@ def add_to_cart(cart_add_request):
         except Exception as e:
             print(f"Error searching hotels: {e}")
             
-    if not detail_obj and not price:
+    if not detail_obj:
         print("Error: Could not resolve item details.")
         return False
 

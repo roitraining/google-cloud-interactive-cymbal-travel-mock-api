@@ -7,10 +7,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.models import (
-    Car, Hotel, HotelRoom, Flight, 
-    FlightSearchRequest, HotelSearchRequest, CarSearchRequest,
-    CartItemDetail, User, LoginRequest, 
-    CartAddRequest, CartRemoveRequest, CheckoutRequest, OrderStatusResponse,
+    Car, Hotel, Flight,
+    CartItemDetail, User, LoginRequest,
+    CartAddRequest, CartRemoveRequest, CheckoutRequest,
     CartModel, ChatRequest
 )
 from app import database
@@ -68,8 +67,15 @@ async def chat_endpoint(request: ChatRequest):
     """
     try:
         response = await chat.process_message(request.user_id, request.message)
+        
+        # If response is empty or None, return a friendly message
+        if not response:
+             return {"response": "I didn't receive a response from the agent. Please try again."}
+             
         return {"response": response}
     except Exception as e:
+        # Log the error on the server side
+        print(f"Error in chat endpoint: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # --- FLIGHTS ---

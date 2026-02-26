@@ -8,50 +8,49 @@ import json
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize Vertex AI
+# Module-level agent instance
 remote_agent = None
+
 
 def init_agent():
     global remote_agent
     try:
-        # Check if PROJECT_ID is available
         if not config.PROJECT_ID:
             logger.warning("PROJECT_ID not set. Chat agent will not be initialized.")
             return
 
-        vertexai.init(project=config.PROJECT_ID, location=config.AGENT_LOCATION)
-        
-        # Initialize the client
-        # Note: In the notebook, the user uses client.agent_engines.get(...)
-        # We need to replicate that.
-        # The prompt uses:
-        # client = vertexai.Client(...)
-        # remote_agent = client.agent_engines.get(...)
-        
-        # However, vertexai.init sets the default project/location which might simplify things if using high-level SDK,
-        # but for Agent Engine specific client, let's follow the notebook pattern exactly.
-        
+        logger.info(
+            f"Initializing Vertex AI with project={config.PROJECT_ID}, "
+            f"location={config.AGENT_LOCATION}"
+        )
+
         client = vertexai.Client(
             project=config.PROJECT_ID,
             location=config.AGENT_LOCATION,
         )
-        
-        agent_name = f"projects/{config.PROJECT_ID}/locations/{config.AGENT_LOCATION}/reasoningEngines/{config.AGENT_ENGINE_RESOURCE_ID}"
+
+        agent_name = (
+            f"projects/{config.PROJECT_ID}"
+            f"/locations/{config.AGENT_LOCATION}"
+            f"/reasoningEngines/{config.AGENT_ENGINE_RESOURCE_ID}"
+        )
         logger.info(f"Connecting to Agent Engine: {agent_name}")
-        
+
         remote_agent = client.agent_engines.get(name=agent_name)
-        logger.info(f"Connected to Agent Engine: {remote_agent.api_resource.display_name}")
-        
+        logger.info("Successfully connected to Agent Engine.")
+
     except Exception as e:
         logger.error(f"Failed to initialize Agent Engine: {e}")
         remote_agent = None
 
-async def process_message(user_id: str, message: str):
+
+async def process_message(user_id: str, message: str) -> str:
     """
-    Sends a message to the agent and returns the full response text.
+    Sends a message to the Agent Engine agent and returns the response text.
+    Streams all events and extracts text from the final content-bearing event.
     """
     start_time = time.time()
-    full_text = ""
+    response_text = ""
     error_msg = None
 
     try:
@@ -62,42 +61,32 @@ async def process_message(user_id: str, message: str):
                 error_msg = "Sorry, the AI agent is not currently available."
                 return error_msg
 
-        # The notebook uses async_stream_query
+        last_event = None
+
         async for event in remote_agent.async_stream_query(
             user_id=user_id,
-            message=message
+            message=message,
         ):
-            # Checking structure from notebook: event["content"]["parts"][0]["text"]
-            # But event might be an object, notebook access it as dict which implies it might be subscriptable 
-            # or the notebook output shows it printed as dict. 
-            # The SDK might return objects.
-            # If it's a proto object, we access attributes. 
-            # Notebook says: event["content"]["parts"][0]["text"]
-            # This suggests it behaves like a dict or is a dict.
-            # Let's try to handle both or assume dict as per notebook.
-            
-            # Defensive coding in case the structure varies
+            last_event = event
+
+        # Extract text from the last event, mirroring the working notebook pattern
+        if last_event is not None and "content" in last_event:
             try:
-                # Check for explicit error in event (e.g. 429 Resource Exhausted)
-                if isinstance(event, dict) and "error" in event:
-                     logger.error(f"Received error from Agent: {event}")
-                     raise Exception(f"Agent Error: {event.get('message', 'Unknown error')}")
-                
-                if hasattr(event, "content"):
-                     # It's an object
-                     # Check if parts exist
-                     parts = event.content.parts
-                     if parts:
-                         full_text += parts[0].text
-                else:
-                    # Treat as dict
-                    full_text += event["content"]["parts"][0]["text"]
-            except (KeyError, IndexError, AttributeError) as e:
-                logger.warning(f"Error parsing event: {e}, Event: {event}")
-                continue
-                
-        return full_text
-        
+                parts = last_event["content"]["parts"]
+                response_text = "".join(
+                    part["text"] for part in parts if "text" in part
+                )
+            except (KeyError, TypeError) as e:
+                logger.warning(f"Could not extract text from last event: {e}. Event: {last_event}")
+                response_text = str(last_event)
+        elif last_event is not None:
+            logger.warning(f"Last event had no 'content' key. Event: {last_event}")
+            response_text = str(last_event)
+        else:
+            response_text = "No response received from the agent."
+
+        return response_text
+
     except Exception as e:
         logger.error(f"Error during chat processing: {e}")
         error_msg = "I encountered an error processing your request."
@@ -108,11 +97,12 @@ async def process_message(user_id: str, message: str):
         log_entry = {
             "user_id": user_id,
             "message": message,
-            "response": full_text if not error_msg else None, 
+            "response": response_text if not error_msg else None,
             "error": error_msg,
-            "duration_seconds": duration
+            "duration_seconds": round(duration, 3),
         }
         logger.info(json.dumps(log_entry))
 
-# Initialize on module load or explicitly
+
+# Initialize on module load
 init_agent()

@@ -28,14 +28,14 @@ def test_search_flights(mock_search_flights):
             "arrival_city": "London",
             "origin": "SFO", 
             "destination": "LHR", 
-            "departure_time": "2025-12-25T10:00:00", 
-            "arrival_time": "2025-12-25T20:00:00", 
+            "departure_time": "2026-12-25T10:00:00", 
+            "arrival_time": "2026-12-25T20:00:00", 
             "price": 500.0,
             "seat_class": "Economy",
             "connections": 0
         }
     ]
-    response = client.get("/api/flights/search", params={"origin": "SFO", "destination": "LHR", "date": "2025-12-25"})
+    response = client.get("/api/flights/search", params={"origin": "SFO", "destination": "LHR", "date": "2026-12-25"})
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1

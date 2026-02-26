@@ -28,8 +28,14 @@ GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "cymbal-travel-images-dar")
 BASE_IMAGE_URL = f"https://storage.googleapis.com/{GCS_BUCKET_NAME}"
 
 # Agent Engine Configuration
+# Using standard "us-central1" as default.
+# Make sure to set AGENT_ENGINE_RESOURCE_ID in Cloud Run env vars.
 AGENT_ENGINE_RESOURCE_ID = os.getenv("AGENT_ENGINE_RESOURCE_ID", "4329730555135393792")
-AGENT_LOCATION = os.getenv("AGENT_LOCATION", "us-central1")
+AGENT_LOCATION = os.getenv("AGENT_LOCATION", "us-central1") 
+
+# Ensure PROJECT_ID is set (should be handled above, but double check env vars)
+if not PROJECT_ID:
+    PROJECT_ID = os.getenv("PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT")
 
 
 def configure_environment():

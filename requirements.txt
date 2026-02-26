@@ -6,7 +6,8 @@ pydantic
 python-multipart
 python-dotenv
 pytest
+anyio[trio]
 httpx
 google-cloud-storage
-google-cloud-aiplatform
+google-cloud-aiplatform>=1.74.0
 google-genai
