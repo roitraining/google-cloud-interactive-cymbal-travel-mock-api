@@ -9,26 +9,24 @@ import json
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Module-level agent instance
-remote_agent = None
 
+async def process_message(user_id: str, message: str) -> str:
+    """
+    Sends a message to the Agent Engine agent and returns the response text.
 
-def init_agent():
+    A fresh vertexai.Client is created per call so its internal aiohttp
+    ClientSession is always constructed inside the running uvicorn event loop.
+    Caching the client across requests causes "client has been closed" errors
+    on Cloud Run because the session gets bound to a pre-startup loop context.
     """
-    Initialize the Agent Engine client. Called synchronously at module load
-    (before the uvicorn event loop starts) so that the vertexai/aiohttp client
-    is set up in the correct pre-loop context.
-    """
-    global remote_agent
+    start_time = time.time()
+    response_text = ""
+    error_msg = None
+
     try:
         if not config.PROJECT_ID:
-            logger.warning("PROJECT_ID not set. Chat agent will not be initialized.")
-            return
-
-        logger.info(
-            f"Initializing Vertex AI with project={config.PROJECT_ID}, "
-            f"location={config.AGENT_LOCATION}"
-        )
+            error_msg = "Sorry, the AI agent is not currently available."
+            return error_msg
 
         client = vertexai.Client(
             project=config.PROJECT_ID,
@@ -40,32 +38,8 @@ def init_agent():
             f"/locations/{config.AGENT_LOCATION}"
             f"/reasoningEngines/{config.AGENT_ENGINE_RESOURCE_ID}"
         )
-        logger.info(f"Connecting to Agent Engine: {agent_name}")
 
         remote_agent = client.agent_engines.get(name=agent_name)
-        logger.info("Successfully connected to Agent Engine.")
-
-    except Exception as e:
-        logger.error(f"Failed to initialize Agent Engine: {e}")
-        remote_agent = None
-
-
-async def process_message(user_id: str, message: str) -> str:
-    """
-    Sends a message to the Agent Engine agent and returns the response text.
-    Streams all events and extracts text from the final content-bearing event.
-    """
-    start_time = time.time()
-    response_text = ""
-    error_msg = None
-
-    try:
-        if not remote_agent:
-            logger.warning("Agent not initialized. Re-attempting initialization...")
-            init_agent()
-            if not remote_agent:
-                error_msg = "Sorry, the AI agent is not currently available."
-                return error_msg
 
         last_event = None
 
@@ -109,8 +83,3 @@ async def process_message(user_id: str, message: str) -> str:
             "duration_seconds": round(duration, 3),
         }
         logger.info(json.dumps(log_entry))
-
-
-# Initialize synchronously at module load, before uvicorn starts its event loop.
-# vertexai's internal aiohttp ClientSession must be created in a pre-loop context.
-init_agent()
