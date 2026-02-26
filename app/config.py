@@ -31,6 +31,7 @@ BASE_IMAGE_URL = f"https://storage.googleapis.com/{GCS_BUCKET_NAME}"
 AGENT_ENGINE_RESOURCE_ID = os.getenv("AGENT_ENGINE_RESOURCE_ID", "4329730555135393792")
 AGENT_LOCATION = os.getenv("AGENT_LOCATION", "us-central1")
 
+
 def configure_environment():
     """
     Sets up environment variables if they are not already set.

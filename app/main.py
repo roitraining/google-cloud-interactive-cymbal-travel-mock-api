@@ -46,11 +46,11 @@ async def root():
 # Create a router for the API endpoints
 api_router = APIRouter()
 
-@api_router.get("/", tags=["General"])
+@api_router.get("/", tags=["General"], operation_id="api_root")
 async def api_root():
     return {"message": "Welcome to the Cymbal Travel Mock API"}
 
-@api_router.get("/save_inventory", tags=["Admin"], summary="Initialize Inventory")
+@api_router.get("/save_inventory", tags=["Admin"], summary="Initialize Inventory", operation_id="save_inventory")
 async def save_inventory():
     """
     Initialize the database with mock Cars and Hotels.
@@ -61,7 +61,7 @@ async def save_inventory():
     else:
         raise HTTPException(status_code=500, detail="Failed to save inventory")
 
-@api_router.post("/chat", tags=["Chat"])
+@api_router.post("/chat", tags=["Chat"], operation_id="chat_endpoint")
 async def chat_endpoint(request: ChatRequest):
     """
     Interact with the Vertex AI Agent.
@@ -73,7 +73,7 @@ async def chat_endpoint(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 # --- FLIGHTS ---
-@api_router.get("/flights/search", tags=["Flights"], response_model=List[Flight])
+@api_router.get("/flights/search", tags=["Flights"], response_model=List[Flight], operation_id="search_flights")
 async def search_flights(
     origin: str, 
     destination: str, 
@@ -86,17 +86,17 @@ async def search_flights(
     return database.search_flights(origin, destination, date)
 
 # --- HOTELS ---
-@api_router.get("/hotels/search", tags=["Hotels"], response_model=List[Hotel])
+@api_router.get("/hotels/search", tags=["Hotels"], response_model=List[Hotel], operation_id="search_hotels")
 async def search_hotels(
-    location: Optional[str] = None, 
-    date: Optional[str] = None
+    location: Optional[str] = Query(None, description="The location to search for (e.g. 'Paris', 'London')."),
+    date: Optional[str] = Query(None, description="Check-in date (optional). If not provided, returns availability for next week.")
 ):
     """
-    Search for hotels by location.
+    Search for hotels, resorts, and accommodations by location.
     """
     return database.search_hotels(location, date)
 
-@api_router.get("/hotels/top", tags=["Hotels"], response_model=List[Hotel])
+@api_router.get("/hotels/top", tags=["Hotels"], response_model=List[Hotel], operation_id="get_top_resorts")
 async def get_top_resorts():
     """
     Get 3 random top resorts.
@@ -104,7 +104,7 @@ async def get_top_resorts():
     return database.get_top_resorts(limit=3)
 
 # --- CARS ---
-@api_router.get("/cars/search", tags=["Cars"], response_model=List[Car])
+@api_router.get("/cars/search", tags=["Cars"], response_model=List[Car], operation_id="search_cars")
 async def search_cars(
     location: Optional[str] = None, 
     date: Optional[str] = None
@@ -116,7 +116,7 @@ async def search_cars(
 
 # --- CART / BOOKING ---
 
-@api_router.post("/cart/add", tags=["Cart"])
+@api_router.post("/cart/add", tags=["Cart"], operation_id="add_item_to_cart")
 async def add_item_to_cart(request: CartAddRequest):
     """
     Add a Flight, Hotel, or Car to the cart/itinerary.
@@ -126,7 +126,7 @@ async def add_item_to_cart(request: CartAddRequest):
         return {"message": "Item added to cart", "cart": database.get_cart(request.user_id)}
     raise HTTPException(status_code=400, detail="Failed to add item")
 
-@api_router.post("/cart/remove", tags=["Cart"])
+@api_router.post("/cart/remove", tags=["Cart"], operation_id="remove_item_from_cart")
 async def remove_item_from_cart(request: CartRemoveRequest):
     """
     Remove an item from the cart.
@@ -136,7 +136,7 @@ async def remove_item_from_cart(request: CartRemoveRequest):
         return {"message": "Item removed from cart", "cart": database.get_cart(request.user_id)}
     raise HTTPException(status_code=400, detail="Failed to remove item")
 
-@api_router.get("/cart/{user_id}", tags=["Cart"], response_model=CartModel)
+@api_router.get("/cart/{user_id}", tags=["Cart"], response_model=CartModel, operation_id="get_cart")
 async def get_cart(user_id: str):
     """
     Get the current user's cart/itinerary.
@@ -149,7 +149,7 @@ async def get_cart(user_id: str):
         total_price=cart_data["total_price"]
     )
 
-@api_router.post("/cart/checkout", tags=["Cart"])
+@api_router.post("/cart/checkout", tags=["Cart"], operation_id="checkout")
 async def checkout(request: CheckoutRequest):
     """
     Book all items in the cart.
@@ -176,12 +176,12 @@ async def checkout(request: CheckoutRequest):
 
 # --- USERS ---
 
-@api_router.post("/users", tags=["Users"])
+@api_router.post("/users", tags=["Users"], operation_id="create_account")
 async def create_account(user: User):
     database.create_user(user.username, user.password)
     return {"message": "User created successfully", "username": user.username}
 
-@api_router.post("/login", tags=["Users"])
+@api_router.post("/login", tags=["Users"], operation_id="login")
 async def login(request: LoginRequest):
     if database.verify_user(request.username, request.password):
         return {"message": "Login successful", "token": "mock-token-123"}
