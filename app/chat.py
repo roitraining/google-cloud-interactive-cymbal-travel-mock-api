@@ -1,3 +1,4 @@
+import traceback
 import vertexai
 from app import config
 import logging
@@ -13,6 +14,11 @@ remote_agent = None
 
 
 def init_agent():
+    """
+    Initialize the Agent Engine client. Called synchronously at module load
+    (before the uvicorn event loop starts) so that the vertexai/aiohttp client
+    is set up in the correct pre-loop context.
+    """
     global remote_agent
     try:
         if not config.PROJECT_ID:
@@ -88,7 +94,8 @@ async def process_message(user_id: str, message: str) -> str:
         return response_text
 
     except Exception as e:
-        logger.error(f"Error during chat processing: {e}")
+        logger.error(f"Error during chat processing: {type(e).__name__}: {e}")
+        logger.error(traceback.format_exc())
         error_msg = "I encountered an error processing your request."
         return error_msg
 
@@ -104,5 +111,6 @@ async def process_message(user_id: str, message: str) -> str:
         logger.info(json.dumps(log_entry))
 
 
-# Initialize on module load
+# Initialize synchronously at module load, before uvicorn starts its event loop.
+# vertexai's internal aiohttp ClientSession must be created in a pre-loop context.
 init_agent()
