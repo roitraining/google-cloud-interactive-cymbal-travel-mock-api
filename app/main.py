@@ -19,7 +19,7 @@ from app import config
 
 app = FastAPI(
     title="Cymbal Travel Mock API",
-    description="Mock API for Cymbal Travel agency (Flights, Hotels, Cars) for CX Agent Studio training.",
+    description="Mock API for Cymbal Travel Resorts (Flights, Resorts (Hotels), Cars) for CX Agent Studio training.",
     version="1.0.0",
     servers=[{"url": config.SERVICE_URL, "description": "Cloud Run Service URL"}]
 )
