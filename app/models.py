@@ -103,4 +103,10 @@ class CartModel(BaseModel):
 class ChatRequest(BaseModel):
     user_id: str
     message: str
+    session_id: Optional[str] = None
+
+
+class SessionCreateResponse(BaseModel):
+    session_id: str
+    user_id: str
 

@@ -527,9 +527,15 @@
             <div v-if="isChatOpen" class="w-80 h-[calc(100vh-8rem)] bg-white rounded-lg shadow-xl flex flex-col overflow-hidden border border-gray-200 transition-all duration-300 ease-in-out">
                 <div class="bg-travel-600 p-4 flex justify-between items-center text-white">
                     <h3 class="font-bold">Lumi - Your Destination Agent</h3>
-                    <button @click="toggleChat" class="hover:text-gray-200">
-                        <i class="ph ph-x text-lg"></i>
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <button @click="startNewSession" title="Start a new conversation" class="hover:text-gray-200 flex items-center gap-1 text-xs border border-white/40 rounded px-2 py-1 hover:bg-white/10 transition-colors">
+                            <i class="ph ph-chat-circle-plus text-base"></i>
+                            New
+                        </button>
+                        <button @click="toggleChat" class="hover:text-gray-200">
+                            <i class="ph ph-x text-lg"></i>
+                        </button>
+                    </div>
                 </div>
                 <!-- Messages Area -->
                 <div class="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col space-y-3" ref="chatContainer">
@@ -617,6 +623,7 @@
                 const isTyping = ref(false);
                 const userMessage = ref('');
                 const chatContainer = ref(null);
+                const sessionId = ref(null); // Agent Engine session ID
                 
                 // Resort Modal State
                 const selectedResort = ref(null);
@@ -663,6 +670,32 @@
                     isChatOpen.value = !isChatOpen.value;
                 };
 
+                // Returns the user_id to use for Agent Engine: username if logged in, else 'Guest'
+                const agentUserId = () => isLoggedIn.value ? user.value : 'Guest';
+
+                const createAgentSession = async () => {
+                    try {
+                        const res = await fetch('/api/chat/session', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ user_id: agentUserId() })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            sessionId.value = data.session_id;
+                        } else {
+                            console.error('Failed to create Agent Engine session');
+                        }
+                    } catch (e) {
+                        console.error('Error creating Agent Engine session:', e);
+                    }
+                };
+
+                const startNewSession = async () => {
+                    sessionId.value = null;
+                    chatMessages.value = [{ role: 'bot', text: 'Hello! How can I help you today?' }];
+                };
+
                 const sendMessage = async () => {
                     const text = userMessage.value.trim();
                     if (!text) return;
@@ -672,12 +705,23 @@
                     isTyping.value = true;
                     
                     try {
+                        // Lazily create an Agent Engine session on the first message of a conversation
+                        if (!sessionId.value) {
+                            await createAgentSession();
+                        }
+
+                        if (!sessionId.value) {
+                            chatMessages.value.push({ role: 'bot', text: "Sorry, I couldn't start a session. Please try again." });
+                            return;
+                        }
+
                         // Sending to real agent
                         const res = await fetch('/api/chat', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ 
-                                user_id: user.value || 'guest', 
+                                user_id: agentUserId(), 
+                                session_id: sessionId.value,
                                 message: text 
                             })
                         });
@@ -1091,8 +1135,11 @@
                     isTyping,
                     userMessage,
                     chatContainer,
+                    sessionId,
                     toggleChat,
                     sendMessage,
+                    createAgentSession,
+                    startNewSession,
                     formatMessage,
                     user,
                     isLoggedIn,

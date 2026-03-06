@@ -10,7 +10,7 @@ from app.models import (
     Car, Hotel, Flight,
     CartItemDetail, User, LoginRequest,
     CartAddRequest, CartRemoveRequest, CheckoutRequest,
-    CartModel, ChatRequest
+    CartModel, ChatRequest, SessionCreateResponse
 )
 from app import database
 from app import chat
@@ -61,13 +61,32 @@ async def save_inventory():
     else:
         raise HTTPException(status_code=500, detail="Failed to save inventory")
 
+@api_router.post("/chat/session", tags=["Chat"], response_model=SessionCreateResponse, operation_id="create_chat_session")
+async def create_chat_session(request: Request):
+    """
+    Create a new Agent Engine session. Returns a session_id to be passed in
+    subsequent /chat calls. The frontend should call this once per conversation
+    and reuse the session_id until the user explicitly starts a new session.
+    """
+    body = await request.json()
+    user_id = body.get("user_id", "Guest")
+    try:
+        session_id = await chat.create_session(user_id)
+        return SessionCreateResponse(session_id=session_id, user_id=user_id)
+    except Exception as e:
+        print(f"Error creating chat session: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @api_router.post("/chat", tags=["Chat"], operation_id="chat_endpoint")
 async def chat_endpoint(request: ChatRequest):
     """
     Interact with the Vertex AI Agent.
     """
+    if not request.session_id:
+        raise HTTPException(status_code=400, detail="session_id is required. Call /api/chat/session first.")
     try:
-        response = await chat.process_message(request.user_id, request.message)
+        response = await chat.process_message(request.user_id, request.message, request.session_id)
         
         # If response is empty or None, return a friendly message
         if not response:
