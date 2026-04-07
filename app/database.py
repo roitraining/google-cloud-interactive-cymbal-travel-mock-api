@@ -9,13 +9,19 @@ from app.models import (
 )
 from app import config
 
-# Initialize Firestore
+# Lazy Firestore client — initialized on first use to reduce cold start time
 db = None
-try:
-    db = firestore.Client()
-    print("Firestore client initialized for Cymbal Travel.")
-except Exception as e:
-    print(f"Warning: Could not initialize Firestore client. {e}")
+
+def _get_db():
+    """Initializes the Firestore client on first use and returns it."""
+    global db
+    if db is None:
+        try:
+            db = firestore.Client()
+            print("Firestore client initialized for Cymbal Travel.")
+        except Exception as e:
+            print(f"Warning: Could not initialize Firestore client. {e}")
+    return db
 
 # --- Collection Names ---
 COL_CARS = "travel-cars"
@@ -66,6 +72,7 @@ LOCATIONS = [
 
 def save_inventory():
     """Initializes the Car and Hotel inventory in Firestore using the full list."""
+    _get_db()
     if not db:
         return False
     
@@ -143,6 +150,7 @@ def save_inventory():
 # --- Retrieval Functions ---
 
 def search_cars(location: str = None, date: str = None):
+    _get_db()
     if not db:
         return MOCK_CARS # Fallback for local testing without creds
         
@@ -153,6 +161,7 @@ def search_cars(location: str = None, date: str = None):
     return results
 
 def search_hotels(location: str = None, date: str = None):
+    _get_db()
     if not db:
         all_hotels = MOCK_HOTELS
     else:
@@ -168,6 +177,7 @@ def search_hotels(location: str = None, date: str = None):
     return filtered if filtered else all_hotels # Return all if no match found (for demo)
 
 def get_top_resorts(limit: int = 3):
+    _get_db()
     if not db:
         return MOCK_HOTELS[:limit]
         
@@ -190,6 +200,7 @@ COL_FLIGHTS = "flights"
 
 def search_flights(origin: str, destination: str, date: str):
     """Generates mock flights."""
+    _get_db()
     # Deterministic random based on input so it feels consistent
     random.seed(f"{origin}{destination}{date}")
     
@@ -282,6 +293,7 @@ def search_flights(origin: str, destination: str, date: str):
 # --- Cart Logic ---
 
 def get_cart(user_id: str):
+    _get_db()
     if not db:
         return {"user_id": user_id, "items": [], "total_price": 0.0}
         
@@ -295,6 +307,7 @@ def get_cart(user_id: str):
         return {"user_id": user_id, "items": [], "total_price": 0.0}
 
 def clear_cart(user_id: str):
+    _get_db()
     if not db:
         return True
     
@@ -306,6 +319,7 @@ def add_to_cart(cart_add_request):
     """
     Adds a fully formed item to the cart.
     """
+    _get_db()
     if not db:
         return False
 
@@ -438,6 +452,7 @@ def add_to_cart(cart_add_request):
     return True
 
 def remove_from_cart(cart_remove_request):
+    _get_db()
     if not db:
         return False
         

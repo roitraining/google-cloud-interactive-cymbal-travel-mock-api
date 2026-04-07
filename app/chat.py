@@ -1,5 +1,4 @@
 import traceback
-import vertexai
 from app import config
 import logging
 import time
@@ -23,6 +22,7 @@ async def create_session(user_id: str) -> str:
     """
     Creates a new Agent Engine session for the given user and returns the session ID.
     """
+    import vertexai  # Lazy import — deferred to reduce cold start time
     if not config.PROJECT_ID:
         raise RuntimeError("AI agent is not configured (PROJECT_ID missing).")
 
@@ -51,6 +51,7 @@ async def process_message(user_id: str, message: str, session_id: str) -> str:
     error_msg = None
 
     try:
+        import vertexai  # Lazy import — deferred to reduce cold start time
         if not config.PROJECT_ID:
             error_msg = "Sorry, the AI agent is not currently available."
             return error_msg
